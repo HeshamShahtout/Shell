@@ -3,121 +3,155 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-    int no_reprint_prmpt = 0;
+#include <signal.h>
+
+int launch(char **args,int background);
+int parse_line(char*args[],char line[]);
+void read_line(char line[]);
+void remove_EOL(char line[]);
+int split_line(char* args[],char line[]);
+void shellPrompt();
+int changeDirectory(char* args[]);
+int flag =0 ;
+int x = 0;
+int main()
+{
+    char** args; 
+    args = (char *) malloc(10*(sizeof(char**)));
+    char line[100];
+    while(1)
+    {
+        shellPrompt();
+        parse_line(args,line);
+    }
+    return 0;
+}
+
+void shellPrompt()
+{
+    char cwd[1024];
+    getcwd(cwd,sizeof(cwd));
+
+    char host[1204] = "";
+    gethostname(host, sizeof(host));
+    printf("%s@%s:%s> ", getenv("LOGNAME"), host,cwd);
+}
+
+int parse_line(char*args[],char line[])
+{
+    read_line(line);
+    if(flag ==1)
+    {
+        flag = 0;
+        return 0;
+    }
+    split_line(args,line);
+    return 1;
+}
+
+void read_line(char line[])
+{
+    char *x= fgets(line,100,stdin);
+    remove_EOL(line);
+}
+
 void remove_EOL(char line[])
 {
-    int i, lenght ;
-    lenght = strlen(line);
-    for(i = 0 ; i < lenght ; i++) {
+    int i, length,j=0;
+    int temp[100];
+    length = strlen(line);
+    for(i = 0 ; i < length ; i++) {
         if(line[i] == '\n')
             line[i] = '\0' ;
     }
-}
-void read_line(char line[])
-{
-    char* ret = fgets(line,100,stdin);
-    remove_EOL(line);
-
-    //printf("test");
-}
-int XXXXX(char* args[],char line[])
-{
-    char ** res  = NULL;
-    char *  p    = strtok (line, " ");
-    int n_spaces = 0, i=0,j=0,background=0,z=0;
-    while (p) {
-        res = realloc (res, sizeof (char*) * ++n_spaces);
-
-        if (res == NULL)
-            exit (-1);
-        res[n_spaces-1] = p;
-        p = strtok (NULL, " ");
-    }
-    res = realloc (res, sizeof (char*) * (n_spaces+1));
-    res[n_spaces] = 0;
-    for (i = 0; i < (n_spaces+1); ++i) {
-        args[j] = res[i];
+    for (i = 0; i < length; ++i) {
+        temp[j] = line[i];
         j++;
     }
-    if (strcmp(args[0],"cd") == 0) changeDirectory(args);
-        
-    else if(strcmp(args[0],"clear")==0) {
-        system("clear");
+    char x = line[0];
+    char *p = strtok (temp, " ");
+    if(strcmp(line,"\0")==0||p == NULL)
+    {
+        flag =1;
     }
+}
+
+int split_line(char* args[],char line[])
+{
+    char ** result  = NULL;
+    char *  p    = strtok (line, " ");
+    int n = 0, i=0,j=0,background=0,z=0;
+    while (p) {
+        result = realloc (result, sizeof (char*) * ++n);
+        if (result == NULL)
+            exit (-1);
+        result[n-1] = p;
+        p = strtok (NULL, " ");
+    }
+    result = realloc (result, sizeof (char*) * (n+1));
+    result[n] = 0;
+    for (i = 0; i < (n+1); ++i) {
+        args[j] = result[i];
+        j++;
+    }
+    
+    if (strcmp(args[0],"cd") == 0) changeDirectory(args);
+    
     else if(strcmp(args[0],"exit")==0) {
      exit(0);
     }
+    
     else{
         while (args[z] != NULL && background == 0){
             if (strcmp(args[z],"&") == 0&&args[z+1]==NULL)
             {
                 args[z] = NULL;
-			
-	             background = 1;
+                background = 1;
             }
         z++;   
         }  
-        
-//        printf("%d",background);
         launch(args,background); 
     }
-//    for(i=0; i<j+1; ++i) {
-//        printf ("res[%d] = %s\n", i, args[i]);
-//    }
-    free (res);
+    free (result);
     return 1;
 }   
 
-void launch(char **args,int background)
+int launch(char **args,int background)
 {
-     int err = -1;
 	 pid_t pid, wpid;
 	 if((pid=fork())==-1){
 		 printf("Child process could not be created\n");
-		 return;
+		 return 0;
 	 }
      if(pid==0){
-         if (execvp(args[0],args)==err){
-			printf("Command not found");
+         x = execvp(args[0],args);
+         if (x ==-1){
+			printf("Command %s not found\n",args[0]);
+           exit(0);
 		}
      }
      if(background == 0)
      {
-        waitpid(pid,NULL,0);
+            waitpid(pid,NULL,0);
      }
      else
      {
          printf("Process Created with PID:%d\n",pid);
      }
+     return 1;
 }
-int parse_line(char*args[],char line[])
-{
-    read_line(line);
-    XXXXX(args,line);
-    return 1;
-}
-void shellPrompt()
-{
-    // We print the prompt in the form "<user>@<host> <cwd> >"
-    char cwd[1024];
-    getcwd(cwd,sizeof(cwd));
 
-    char hostn[1204] = "";
-    gethostname(hostn, sizeof(hostn));
-    printf("%s@%s:%s> ", getenv("LOGNAME"), hostn,cwd);
-}
 int changeDirectory(char* args[])
 {
     char  gdir[1024];
     char  *dir;
     char  *to;
-    // If we write no path (only 'cd'), then go to the home directory
+
     if (args[1] == NULL) {
         chdir(getenv("HOME"));
         return 1;
     }
-    // Else we change the directory to the one specified by the
-    // argument, if possible
+
     else {
             getcwd(gdir, sizeof(gdir));
             dir = strcat(gdir, "/");
@@ -127,23 +161,6 @@ int changeDirectory(char* args[])
             perror("Bash");
             return -1;
         }
-    }
-    return 0;
-}
-int main()
-{
-    char** args;
-    args = (char *) malloc(10*(sizeof(char**)));
-    char line[100];
-    pid_t pid, wpid;
-    int status; 
-
-    int flag = 1;
-    while(flag!=0)
-    {
-        if (no_reprint_prmpt == 0) shellPrompt();
-		no_reprint_prmpt = 0;
-        parse_line(args,line);
     }
     return 0;
 }
