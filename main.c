@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+<<<<<<< HEAD
 #include <signal.h>
 
 int launch(char **args,int background);
@@ -15,6 +16,11 @@ int changeDirectory(char* args[]);
 int flag =0 ;
 int x = 0;
 int main()
+=======
+void launch(char **args,int background);
+    int no_reprint_prmpt = 0;
+void remove_EOL(char line[])
+>>>>>>> 51eccf5adce365df3f89a2c796e73d2924aa55d6
 {
     char** args; 
     args = (char *) malloc(10*(sizeof(char**)));
@@ -51,7 +57,12 @@ int parse_line(char*args[],char line[])
 
 void read_line(char line[])
 {
+<<<<<<< HEAD
     char *x= fgets(line,100,stdin);
+=======
+    char* ret = fgets(line,100,stdin);
+
+>>>>>>> 51eccf5adce365df3f89a2c796e73d2924aa55d6
     remove_EOL(line);
 }
 
@@ -124,10 +135,15 @@ int launch(char **args,int background)
 		 return 0;
 	 }
      if(pid==0){
+<<<<<<< HEAD
          x = execvp(args[0],args);
          if (x ==-1){
 			printf("Command %s not found\n",args[0]);
            exit(0);
+=======
+         if (execvp(args[0],args)==err){
+			printf("Command %s not found\n",args[0]);
+>>>>>>> 51eccf5adce365df3f89a2c796e73d2924aa55d6
 		}
      }
      if(background == 0)
@@ -140,6 +156,25 @@ int launch(char **args,int background)
      }
      return 1;
 }
+<<<<<<< HEAD
+=======
+int parse_line(char*args[],char line[])
+{
+	if(line == NULL)
+	{
+		free(line);
+		return 0;
+	}
+    read_line(line);
+    XXXXX(args,line);
+    return 1;
+}
+void shellPrompt()
+{
+    // We print the prompt in the form "<user>@<host> <cwd> >"
+    char cwd[1024];
+    getcwd(cwd,sizeof(cwd));
+>>>>>>> 51eccf5adce365df3f89a2c796e73d2924aa55d6
 
 int changeDirectory(char* args[])
 {
@@ -163,4 +198,24 @@ int changeDirectory(char* args[])
         }
     }
     return 0;
+<<<<<<< HEAD
 }
+=======
+}
+int main()
+{
+    char** args;
+    args = (char *) malloc(10*(sizeof(char**)));
+    char line[100];
+    pid_t pid, wpid;
+    int status; 
+
+    int flag = 1;
+    while(flag!=0)
+    {
+        shellPrompt();
+        parse_line(args,line);
+    }
+    return 0;
+}
+>>>>>>> 51eccf5adce365df3f89a2c796e73d2924aa55d6
