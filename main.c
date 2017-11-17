@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+void launch(char **args,int background);
     int no_reprint_prmpt = 0;
 void remove_EOL(char line[])
 {
@@ -16,6 +17,7 @@ void remove_EOL(char line[])
 void read_line(char line[])
 {
     char* ret = fgets(line,100,stdin);
+
     remove_EOL(line);
 
     //printf("test");
@@ -78,7 +80,7 @@ void launch(char **args,int background)
 	 }
      if(pid==0){
          if (execvp(args[0],args)==err){
-			printf("Command not found");
+			printf("Command %s not found\n",args[0]);
 		}
      }
      if(background == 0)
@@ -92,6 +94,11 @@ void launch(char **args,int background)
 }
 int parse_line(char*args[],char line[])
 {
+	if(line == NULL)
+	{
+		free(line);
+		return 0;
+	}
     read_line(line);
     XXXXX(args,line);
     return 1;
@@ -141,8 +148,7 @@ int main()
     int flag = 1;
     while(flag!=0)
     {
-        if (no_reprint_prmpt == 0) shellPrompt();
-		no_reprint_prmpt = 0;
+        shellPrompt();
         parse_line(args,line);
     }
     return 0;
